@@ -10,7 +10,7 @@ class QLearningAgent:
         # actions = [0, 1, 2, 3]
         self.actions = actions
         # self.learning_rate = 0.1
-        self.learning_rate = 0.5  # Higher learning rate for faster updates
+        self.learning_rate = 0.9  # Higher learning rate for faster updates
 
         
         self.discount_factor = 0.9
@@ -72,15 +72,15 @@ if __name__ == "__main__":
             agent.learn(str(state), action, reward, str(next_state))
 
             state = next_state
-            env.print_value_all(agent.q_table)
+            # env.print_value_all(agent.q_table)
 
             # if episode ends, then break
             if reward == 1:  # If goal is reached
-                reward += 20  # Strong reward for faster learning
+                reward += 50  # Strong reward for faster learning
                 break  # End episode early if goal is reached
             else:
                 reward -= 0.1  # Penalize unnecessary actions
 
-            agent.epsilon = max(0.01, agent.epsilon * 0.99)  # Faster decay for exploitation
-            agent.learning_rate = max(0.001, agent.learning_rate * 0.999)  # Slower decay for continuous learning
+        agent.epsilon = max(0.01, agent.epsilon * 0.99)  # Faster decay for exploitation
+        agent.learning_rate = max(0.001, agent.learning_rate * 0.999)  # Slower decay for continuous learning
 
