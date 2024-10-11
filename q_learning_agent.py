@@ -1,35 +1,33 @@
 import numpy as np
 import random
-from environment import Env
 from collections import defaultdict
+from environment import Env
 
 class QLearningAgent:
     def __init__(self, actions):
-        # actions = [0, 1, 2, 3]
         self.actions = actions
-        self.learning_rate = 0.01
-        self.discount_factor = 0.9
-        self.epsilon = 0.1
+        self.learning_rate = 0.8  # High learning rate to quickly adjust
+        self.discount_factor = 0.99  # Prioritize future rewards
+        self.epsilon = 0.1  # Start with low exploration
+        self.epsilon_min = 0.01  # Very low minimum exploration after success
+        self.epsilon_decay = 0.99  # Decay epsilon slowly
         self.q_table = defaultdict(lambda: [0.0, 0.0, 0.0, 0.0])
+        self.goal_reward_base = 100  # Base reward for reaching the goal
+        self.time_penalty = -1  # Penalty per time step to encourage speed
 
-    # update q function with sample <s, a, r, s'>
+    # Update Q-function with sample <s, a, r, s'>
     def learn(self, state, action, reward, next_state):
         current_q = self.q_table[state][action]
-        # using Bellman Optimality Equation to update q function
+        # Bellman equation update
         new_q = reward + self.discount_factor * max(self.q_table[next_state])
         self.q_table[state][action] += self.learning_rate * (new_q - current_q)
 
-    # get action for the state according to the q function table
-    # agent pick action of epsilon-greedy policy
     def get_action(self, state):
+        # Choose action with epsilon-greedy policy
         if np.random.rand() < self.epsilon:
-            # take random action
-            action = np.random.choice(self.actions)
+            return np.random.choice(self.actions)  # Explore
         else:
-            # take action according to the q function table
-            state_action = self.q_table[state]
-            action = self.arg_max(state_action)
-        return action
+            return self.arg_max(self.q_table[state])  # Exploit
 
     @staticmethod
     def arg_max(state_action):
@@ -44,26 +42,41 @@ class QLearningAgent:
                 max_index_list.append(index)
         return random.choice(max_index_list)
 
+    def decay_epsilon(self):
+        # Gradually reduce exploration rate
+        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+
 if __name__ == "__main__":
     env = Env()
     agent = QLearningAgent(actions=list(range(env.n_actions)))
 
     for episode in range(1000):
         state = env.reset()
+        total_reward = 0
+        steps_to_goal = 0
 
+        # Limit steps to encourage faster success
         while True:
-            env.render()
-
-            # take action and proceed one step in the environment
             action = agent.get_action(str(state))
             next_state, reward, done = env.step(action)
 
-            # with sample <s,a,r,s'>, agent learns new q function
-            agent.learn(str(state), action, reward, str(next_state))
+            # Apply time penalty and compute dynamic goal reward
+            reward += agent.time_penalty  # Penalize time steps
+            steps_to_goal += 1
 
-            state = next_state
-            env.print_value_all(agent.q_table)
-
-            # if episode ends, then break
             if done:
-                break
+                # Increase reward based on steps taken
+                goal_reward = max(0, agent.goal_reward_base - steps_to_goal * 5)  # Decrease reward for longer routes
+                reward += goal_reward
+                total_reward += reward
+                agent.learn(str(state), action, reward, str(next_state))
+                break  # Exit loop on reaching the goal
+
+            agent.learn(str(state), action, reward, str(next_state))
+            state = next_state
+
+        # Decay exploration rate after each episode
+        agent.decay_epsilon()
+
+        # Print total reward per episode for monitoring
+        print(f"Episode {episode+1}: Total Reward = {total_reward}")
