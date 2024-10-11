@@ -1,5 +1,3 @@
-# Q-Legends
-
 import numpy as np
 import random
 from environment import Env
@@ -9,16 +7,10 @@ class QLearningAgent:
     def __init__(self, actions):
         # actions = [0, 1, 2, 3]
         self.actions = actions
-        # self.learning_rate = 0.1
-        self.learning_rate = 0.9  # Higher learning rate for faster updates
-
-        
+        self.learning_rate = 0.01
         self.discount_factor = 0.9
-        # self.epsilon = 0.05
-        self.epsilon = 1.0  # Start with high exploration
-        self.epsilon_decay = 0.99  # Aggressively decay exploration rate
-
-        self.q_table = defaultdict(lambda: [5.0, 5.0, 5.0, 5.0])
+        self.epsilon = 0.1
+        self.q_table = defaultdict(lambda: [0.0, 0.0, 0.0, 0.0])
 
     # update q function with sample <s, a, r, s'>
     def learn(self, state, action, reward, next_state):
@@ -63,24 +55,15 @@ if __name__ == "__main__":
             env.render()
 
             # take action and proceed one step in the environment
-            compressed_state = hash(str(state))  # Hash state for compact lookup
-            action = agent.get_action(compressed_state)
-
+            action = agent.get_action(str(state))
             next_state, reward, done = env.step(action)
 
             # with sample <s,a,r,s'>, agent learns new q function
             agent.learn(str(state), action, reward, str(next_state))
 
             state = next_state
-            # env.print_value_all(agent.q_table)
+            env.print_value_all(agent.q_table)
 
             # if episode ends, then break
-            if reward == 1:  # If goal is reached
-                reward += 50  # Strong reward for faster learning
-                break  # End episode early if goal is reached
-            else:
-                reward -= 0.1  # Penalize unnecessary actions
-
-        agent.epsilon = max(0.01, agent.epsilon * 0.99)  # Faster decay for exploitation
-        agent.learning_rate = max(0.001, agent.learning_rate * 0.999)  # Slower decay for continuous learning
-
+            if done:
+                break
