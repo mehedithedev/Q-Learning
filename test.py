@@ -1,3 +1,5 @@
+# Q-Legends
+
 import numpy as np
 import random
 from collections import defaultdict
@@ -5,29 +7,32 @@ from environment import Env
 
 class QLearningAgent:
     def __init__(self, actions):
+        # actions = [0, 1, 2, 3]
         self.actions = actions
-        self.learning_rate = 0.8  # High learning rate to quickly adjust
-        self.discount_factor = 0.99  # Prioritize future rewards
-        self.epsilon = 0.1  # Start with low exploration
-        self.epsilon_min = 0.01  # Very low minimum exploration after success
-        self.epsilon_decay = 0.99  # Decay epsilon slowly
+        self.learning_rate = 0.8 # Increased learning rate from 0.01 to 0.8 to learn about the environment faster
+        self.discount_factor = 0.99 # Increased discount factor from 0.9 to 0.99 to prioritize future rewards
+        self.epsilon = 0.1 # the agent is allowed to explore 10% in any state and 90% to exploit the learned values
+        self.epsilon_min = 0.01 # Ensures the agent never stops exploring
+        self.epsilon_decay = 0.99 # reduce the exploration rate over time
         self.q_table = defaultdict(lambda: [0.0, 0.0, 0.0, 0.0])
-        self.goal_reward_base = 100  # Base reward for reaching the goal
-        self.time_penalty = -1  # Penalty per time step to encourage speed
+        self.goal_reward_base = 100 # gives the agent a base reward for reaching the goal
+        self.time_penalty = -1 # Added a penalty for each step the agent takes to increase speed
 
-    # Update Q-function with sample <s, a, r, s'>
+        
+    # update q function with sample <s, a, r, s'>
     def learn(self, state, action, reward, next_state):
         current_q = self.q_table[state][action]
-        # Bellman equation update
+        # using Bellman Optimality Equation to update q function
         new_q = reward + self.discount_factor * max(self.q_table[next_state])
         self.q_table[state][action] += self.learning_rate * (new_q - current_q)
 
+    # get action for the state according to the q function table
+    # agent pick action of epsilon-greedy policy
     def get_action(self, state):
-        # Choose action with epsilon-greedy policy
         if np.random.rand() < self.epsilon:
-            return np.random.choice(self.actions)  # Explore
+            return np.random.choice(self.actions) # returned action instantly instead of storing it in a variable
         else:
-            return self.arg_max(self.q_table[state])  # Exploit
+            return self.arg_max(self.q_table[state])
 
     @staticmethod
     def arg_max(state_action):
@@ -43,7 +48,6 @@ class QLearningAgent:
         return random.choice(max_index_list)
 
     def decay_epsilon(self):
-        # Gradually reduce exploration rate
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
 
 if __name__ == "__main__":
@@ -55,28 +59,25 @@ if __name__ == "__main__":
         total_reward = 0
         steps_to_goal = 0
 
-        # Limit steps to encourage faster success
         while True:
+            # removed env.render() to increase the speed of learning process instead of visual feedback
+            
             action = agent.get_action(str(state))
             next_state, reward, done = env.step(action)
 
-            # Apply time penalty and compute dynamic goal reward
-            reward += agent.time_penalty  # Penalize time steps
+            reward += agent.time_penalty
             steps_to_goal += 1
 
             if done:
-                # Increase reward based on steps taken
-                goal_reward = max(0, agent.goal_reward_base - steps_to_goal * 5)  # Decrease reward for longer routes
+                goal_reward = max(0, agent.goal_reward_base - steps_to_goal * 5)
                 reward += goal_reward
                 total_reward += reward
                 agent.learn(str(state), action, reward, str(next_state))
-                break  # Exit loop on reaching the goal
+                break
 
             agent.learn(str(state), action, reward, str(next_state))
             state = next_state
 
-        # Decay exploration rate after each episode
         agent.decay_epsilon()
 
-        # Print total reward per episode for monitoring
         print(f"Episode {episode+1}: Total Reward = {total_reward}")
