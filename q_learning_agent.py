@@ -11,12 +11,14 @@ class QLearningAgent:
         self.actions = actions
         self.learning_rate = 0.8 # Increased learning rate from 0.01 to 0.8 to learn about the environment faster
         self.discount_factor = 0.99 # Increased discount factor from 0.9 to 0.99 to prioritize future rewards
-        self.epsilon = 0.1 # the agent is allowed to explore 10% in any state and 90% to exploit the learned values
+        self.epsilon = 0.1 # the agent is allowed to explore 10% in any state and 90% to exploit the learned values, representing the exploration rate
         self.q_table = defaultdict(lambda: [0.0, 0.0, 0.0, 0.0])
 
         # Added new variables
 
-        self.epsilon_decay = 0.99 # reduce the exploration rate over time
+        self.epsilon_decay = 0.99 # reduce the exploration rate over time, 
+        # Tried to keep it as minimal as possible so it learns minimal and keep focusing more on speed
+        # letting the agent to explore 10% and exploit 99% out of that 10% that was allowed to explore and decreasing that after each episode so its exploration rate decreases over time
         self.epsilon_min = 0.01 # Ensures the agent never stops exploring
         self.goal_reward_base = 100 # gives the agent a base reward for reaching the goal
         self.time_penalty = -1 # Added a penalty for each step the agent takes to increase speed
@@ -55,10 +57,13 @@ class QLearningAgent:
         return random.choice(max_index_list)
 
     
-    def decay_epsilon(self): # reduce the exploration rate over time to encourage more exploitation 
-        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay) # Ensures the agent never stops exploring with the epsilon_min value
+    def decay_epsilon(self): # defined decay_epsilon funciton to reduce the exploration rate over time to encourage more exploitation 
+        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay) # max() function is comparing two values and returning the larger value
+        # with self.epsilon * self.epsilon_decay, the exploration rate is reduced over time 
+        # Ensures the agent never stops exploring with the epsilon_min value
+        # without the max() function, the epsilon value will reach to 0 and the agent will stop exploring
 
-if __name__ == "__main__":
+if __name__ == "__main__": # execute this code only if the the q_learning_agent file is run directly
     env = Env()
     agent = QLearningAgent(actions=list(range(env.n_actions)))
 
