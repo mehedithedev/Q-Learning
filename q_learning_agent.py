@@ -1,4 +1,9 @@
 # Q-Legends
+# Mehedi
+# Mark
+# Aden
+# Gladdis
+# Valarie
 
 import numpy as np
 import random
