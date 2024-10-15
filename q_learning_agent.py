@@ -116,11 +116,16 @@ if __name__ == "__main__": # execute this code only if the the q_learning_agent 
                 # storing the total reward for each episode to keep track of the agent's performance
                 # not being used for the agent to learn, just for better understanding of agent's performance
                 
-                agent.learn(str(state), action, reward, str(next_state))
+                agent.learn(str(state), action, reward, str(next_state)) # will be called when the episode has ended
+                # letting the agent know total reward accumulated for the episode
                 break
 
             # with sample <s,a,r,s'>, agent learns new q function
-            agent.learn(str(state), action, reward, str(next_state))
+            agent.learn(str(state), action, reward, str(next_state)) # will be called each time the agent takes an action
+            # agent gets an update when it reaches to the goal 
+            # dual usage of the learn funciton is here to ensure the agent learns from the environment and updates its q function
+
+            
             state = next_state # update state to next state
 
         agent.decay_epsilon() # calling decay_epsilon function to reduce the exploration rate over time
