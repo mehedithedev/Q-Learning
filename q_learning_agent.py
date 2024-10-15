@@ -17,9 +17,9 @@ class QLearningAgent:
         # Added new variables
 
         self.epsilon_decay = 0.99 # reduce the exploration rate over time, 
-        # Tried to keep it as minimal as possible so it learns minimal and keep focusing more on speed
         # letting the agent to explore 10% and exploit 99% out of that 10% that was allowed to explore and decreasing that after each episode so its exploration rate decreases over time
         self.epsilon_min = 0.01 # Ensures the agent never stops exploring
+        # Tried to keep it as minimal as possible so it learns minimal and keep focusing more on speed
         self.goal_reward_base = 100 # gives the agent a base reward for reaching the goal
         self.time_penalty = -1 # Added a penalty for each step the agent takes to increase speed
 
@@ -62,7 +62,13 @@ class QLearningAgent:
         # with self.epsilon * self.epsilon_decay, the exploration rate is reduced over time 
         # Ensures the agent never stops exploring with the epsilon_min value
         # without the max() function, the epsilon value will reach to 0 and the agent will stop exploring
+        # The calculation example is below: 
+        # max (0.01, 0.1 * 0.99) = max (0.01, 0.099) = 0.099
+        # max (0.01, 0.099 * 0.99) = max (0.01, 0.09801) = 0.09801
+        # max (0.01, 0.09801 * 0.99) = max (0.01, 0.0970399) = 0.0970399
+        # From the above example, the epsilon value is decreasing over time to the right side of max function so the agent will reach to an episode when the value will be vanishingly small so it skips over the value and the agent's path becomes clear to the reward
 
+        
 if __name__ == "__main__": # execute this code only if the the q_learning_agent file is run directly
     env = Env()
     agent = QLearningAgent(actions=list(range(env.n_actions)))
@@ -74,24 +80,48 @@ if __name__ == "__main__": # execute this code only if the the q_learning_agent 
 
         while True:
             #  removed env.render() to increase the speed of learning process instead of visual feedback
+            # did this so my agent takes less processing power to run resulting faster exploration and exploitation
 
+            # did no changes here
             # take action and proceed one step in the environment
             action = agent.get_action(str(state))
-            next_state, reward, done = env.step(action)
+            next_state, reward, done = env.step(action) # a feedback loop which is important for the agent to know the result of its action
+
 
             reward += agent.time_penalty # Added a penalty for each step the agent takes to reach to the goal to increase speed
             steps_to_goal += 1 # Increment step counter by 1 to keep track of each step taken to reach to the goal
 
-            if done:
+            if done: # executed when the episode has ended
+                # Prepares for the next episode
+                
                 goal_reward = max(0, agent.goal_reward_base - steps_to_goal * 5) # implemented a dynamic goal reward based on the number of steps taken to reach to the goal
+                # for example: 
+                # goal_reward = max(0, 100 - 1*5) = max(0, 95) = 95
+                # goal_reward = max(0, 100 - 2*5) = max(0, 90) = 90
+                # goal_reward = max(0, 100 - 3*5) = max(0, 85) = 85
+                # goal_reward = max(0, 100 - 4*5) = max(0, 80) = 80
+                # goal_reward = max(0, 100 - 5*5) = max(0, 75) = 75
+                # the goal_reward will keep decreasing by 5 for each step taken to reach to the goal 
+                # the goal_reward will never reach below 0 as we have 0 at the left side of the max function
+                
                 reward += goal_reward # increment reward by goal reward
+                # for example: 
+                # reward = reward + goal_reward = reward + 95
+                # reward = reward + goal_reward = reward + 90
+                # reward = reward + goal_reward = reward + 85
+                # reward = reward + goal_reward = reward + 80
+                # reward = reward + goal_reward = reward + 75
+                
                 total_reward += reward # update total reward with the reward
+                # storing the total reward for each episode to keep track of the agent's performance
+                # not being used for the agent to learn, just for better understanding of agent's performance
+                
                 agent.learn(str(state), action, reward, str(next_state))
                 break
 
             # with sample <s,a,r,s'>, agent learns new q function
             agent.learn(str(state), action, reward, str(next_state))
-            state = next_state
+            state = next_state # update state to next state
 
         agent.decay_epsilon() # calling decay_epsilon function to reduce the exploration rate over time
 
