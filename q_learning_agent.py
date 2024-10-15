@@ -75,6 +75,7 @@ if __name__ == "__main__": # execute this code only if the the q_learning_agent 
 
     for episode in range(1000):
         state = env.reset()
+        
         total_reward = 0 # Initialized total reward for the episode to 0 to keep track of total rewards
         steps_to_goal = 0 # Initialized step counter to 0 to track steps taken to reach to the goal
 
